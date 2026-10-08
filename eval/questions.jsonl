@@ -1,0 +1,15 @@
+{"question": "What does VPN error 809 mean and how do I fix it?", "answerable": true, "expected_source": "vpn-troubleshooting.md", "reference": "UDP ports 500 and 4500 are blocked; switch to the Northwind-TCP profile."}
+{"question": "How often do passwords expire?", "answerable": true, "expected_source": "password-reset.md", "reference": "Every 90 days."}
+{"question": "How long is my account locked after too many failed logins?", "answerable": true, "expected_source": "password-reset.md", "reference": "30 minutes after 5 failed attempts."}
+{"question": "Which printer do I use on the third floor?", "answerable": true, "expected_source": "printer-setup.md", "reference": "PRN-3F-01."}
+{"question": "My print jobs are stuck, what should I do?", "answerable": true, "expected_source": "printer-setup.md", "reference": "Restart the Print Spooler service and delete the stuck jobs."}
+{"question": "Where can I find the guest wifi password?", "answerable": true, "expected_source": "wifi-connection.md", "reference": "It changes weekly and is posted at the reception desk."}
+{"question": "I get a certificate error on Corp-Secure. What now?", "answerable": true, "expected_source": "wifi-connection.md", "reference": "Run Enroll device certificate in Software Center, then reconnect."}
+{"question": "Can I use text messages for MFA codes?", "answerable": true, "expected_source": "mfa-setup.md", "reference": "No, SMS is not supported."}
+{"question": "I lost my phone and can't pass MFA. How do I get back in?", "answerable": true, "expected_source": "mfa-setup.md", "reference": "Contact the help desk; they verify identity with manager approval and reset MFA."}
+{"question": "When is a laptop eligible for a refresh?", "answerable": true, "expected_source": "slow-laptop.md", "reference": "When it is older than 4 years."}
+{"question": "My computer feels sluggish. What should I check first?", "answerable": true, "expected_source": "slow-laptop.md", "reference": "Restart it, check at least 15 percent free disk space, and disable startup apps."}
+{"question": "How do I set up a Linux dual boot on my laptop?", "answerable": false, "expected_source": null, "reference": ""}
+{"question": "What is the company parental leave policy?", "answerable": false, "expected_source": null, "reference": ""}
+{"question": "How do I configure workflows in Jira?", "answerable": false, "expected_source": null, "reference": ""}
+{"question": "How do I recover a file deleted from the shared network drive?", "answerable": false, "expected_source": null, "reference": ""}
