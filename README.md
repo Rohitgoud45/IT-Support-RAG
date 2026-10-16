@@ -48,9 +48,16 @@ MAX_DISTANCE=0.6 python -m eval.run_eval
 
 Record each run in the table below.
 
+> **Status:** the full LLM-judged evaluation is **pending**. An earlier run used the offline mock model, whose judge always answers "true", so those scores were discarded. The harness now refuses to run without a real API key and records the model used. The free Gemini tier (20 requests/day/model) was exhausted before a full run finished; the harness is resumable, so it will complete on the next run.
+
+**Verified so far** (real run, `gemini-3.5-flash`, paragraph chunking, size 800, top-k 4, `MAX_DISTANCE` 0.75):
+
+- Refusal accuracy on unanswerable questions: **100% (4/4)**, refused by the distance guard without an LLM call.
+- Unit/API tests: **13/13 passing**.
+
 | Run | Chunking | Size | top-k | MAX_DISTANCE | Hit rate | Accuracy | Hallucination | Refusal acc. | False refusal |
 |---|---|---|---|---|---|---|---|---|---|
-| baseline | paragraph | 800 | 4 | 0.75 | 100% | 100% | 0% | 100% | 0% |
+| baseline (`gemini-3.5-flash`) | paragraph | 800 | 4 | 0.75 | pending | pending | pending | 100% (4/4) | pending |
 
 ## Test
 

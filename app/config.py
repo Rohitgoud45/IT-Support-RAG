@@ -16,7 +16,7 @@ OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "")
 
 def get_default_model(provider: str) -> str:
     if provider == "gemini":
-        return "gemini-2.5-flash"
+        return "gemini-3.5-flash"
     elif provider == "openai":
         return "gpt-4o-mini"
     elif provider == "anthropic":

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 from typing import Optional
 
 from . import config
@@ -34,10 +35,16 @@ def _call_gemini(system: str, user: str, model: str, max_tokens: int) -> str:
         _clients["gemini"] = genai.Client(api_key=api_key)
 
     client: genai.Client = _clients["gemini"]
+    extra = {}
+    if "flash" in model:
+        # Flash models "think" by default and those hidden tokens count against
+        # max_output_tokens, which can leave short replies (e.g. the judge) empty.
+        extra["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
     req_config = types.GenerateContentConfig(
         system_instruction=system,
         temperature=0.0,
         max_output_tokens=max_tokens,
+        **extra,
     )
     response = client.models.generate_content(
         model=model,
@@ -118,20 +125,39 @@ def _call_mock(system: str, user: str) -> str:
     })
 
 
-def call_llm(system: str, user: str, model: Optional[str] = None, max_tokens: int = 700) -> str:
-    provider = get_active_provider()
-    effective_model = model or config.LLM_MODEL or config.get_default_model(provider)
+_RETRYABLE = ("429", "rate", "resource_exhausted", "503", "unavailable", "overloaded")
 
+
+def get_effective_model(model: Optional[str] = None) -> str:
+    return model or config.LLM_MODEL or config.get_default_model(get_active_provider())
+
+
+def _dispatch(provider: str, system: str, user: str, model: str, max_tokens: int) -> str:
     if provider == "gemini":
-        return _call_gemini(system, user, effective_model, max_tokens)
+        return _call_gemini(system, user, model, max_tokens)
     elif provider == "openai":
-        return _call_openai(system, user, effective_model, max_tokens)
+        return _call_openai(system, user, model, max_tokens)
     elif provider == "anthropic":
-        return _call_anthropic(system, user, effective_model, max_tokens)
+        return _call_anthropic(system, user, model, max_tokens)
     elif provider == "mock":
         return _call_mock(system, user)
-    else:
-        raise ValueError(f"Unsupported LLM provider: {provider}")
+    raise ValueError(f"Unsupported LLM provider: {provider}")
+
+
+def call_llm(system: str, user: str, model: Optional[str] = None, max_tokens: int = 700, retries: int = 4) -> str:
+    provider = get_active_provider()
+    effective_model = get_effective_model(model)
+
+    for attempt in range(retries + 1):
+        try:
+            return _dispatch(provider, system, user, effective_model, max_tokens)
+        except Exception as exc:  # noqa: BLE001 - provider SDKs raise different types
+            msg = str(exc).lower()
+            daily_quota = "perday" in msg  # resets in hours -- retrying only wastes time
+            if attempt == retries or daily_quota or not any(k in msg for k in _RETRYABLE):
+                raise
+            time.sleep(min(2 ** attempt * 5, 60))  # 5s, 10s, 20s, 40s
+    raise RuntimeError("unreachable")
 
 
 def parse_json(raw: str) -> dict:

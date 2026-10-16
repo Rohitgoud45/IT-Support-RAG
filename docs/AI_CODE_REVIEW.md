@@ -13,8 +13,8 @@
 | 2026-10-08 | `frontend/src/App.jsx` | Basic barebones UI | No provider visibility, no copy functionality, missing status indicators | Added health check indicator, model badge, copy-to-clipboard button, and polished CSS |
 
 ## Things I verified by hand
-- [x] Refusal behavior on out-of-scope questions (verified 100% refusal accuracy on eval harness)
-- [x] Citations point to the passage actually used
+- [x] Refusal behavior on out-of-scope questions (4/4 refused by the distance guard; LLM-level refusal not yet measured)
+- [ ] Citations point to the passage actually used (pending the full eval run)
 - [x] No API key hardcoded in the repo or Docker image
 - [x] Full test suite running and passing (`13/13` passed)
-- [x] End-to-end evaluation harness executed and results logged (`eval/results.json`)
+- [ ] End-to-end evaluation with a real LLM (pending: free-tier quota exhausted; the earlier mock-model results were discarded)
