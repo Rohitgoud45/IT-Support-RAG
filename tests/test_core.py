@@ -54,10 +54,12 @@ def test_call_llm_mock_returns_valid_json():
     res = call_llm(
         system="You are IT assistant.",
         user="Context:\n[1] (VPN)\nRestart VPN client and reconnect.\n\nQuestion: How to fix VPN?",
+        provider="mock",
     )
     data = parse_json(res)
     assert "answerable" in data
     assert isinstance(data["citations"], list)
+
 
 
 def test_retrieval_returns_relevant_chunks():

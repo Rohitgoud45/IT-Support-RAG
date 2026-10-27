@@ -10,7 +10,7 @@ _clients: dict = {}
 
 
 def get_active_provider() -> str:
-    prov = config.LLM_PROVIDER
+    prov = os.getenv("LLM_PROVIDER", config.LLM_PROVIDER).lower()
     if prov and prov != "auto":
         return prov
 
@@ -144,13 +144,20 @@ def _dispatch(provider: str, system: str, user: str, model: str, max_tokens: int
     raise ValueError(f"Unsupported LLM provider: {provider}")
 
 
-def call_llm(system: str, user: str, model: Optional[str] = None, max_tokens: int = 700, retries: int = 4) -> str:
-    provider = get_active_provider()
+def call_llm(
+    system: str,
+    user: str,
+    model: Optional[str] = None,
+    max_tokens: int = 700,
+    retries: int = 4,
+    provider: Optional[str] = None,
+) -> str:
+    active_provider = provider or get_active_provider()
     effective_model = get_effective_model(model)
 
     for attempt in range(retries + 1):
         try:
-            return _dispatch(provider, system, user, effective_model, max_tokens)
+            return _dispatch(active_provider, system, user, effective_model, max_tokens)
         except Exception as exc:  # noqa: BLE001 - provider SDKs raise different types
             msg = str(exc).lower()
             daily_quota = "perday" in msg  # resets in hours -- retrying only wastes time
