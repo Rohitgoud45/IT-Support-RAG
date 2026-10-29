@@ -8,7 +8,6 @@ import time
 from app import config
 from app.generate import answer_question, NO_ANSWER_TEXT
 from app.llm import get_active_provider, get_effective_model
-from app.retrieval import retrieve
 from app.store import get_collection
 
 
@@ -60,20 +59,7 @@ def print_banner():
 
 def run_query(question: str):
     print(f"\n{Colors.BOLD}{Colors.YELLOW}>> Question:{Colors.RESET} {question}")
-    
-    # 1. Retrieval inspect
-    t0 = time.time()
-    raw_hits = retrieve(question, k=config.TOP_K)
-    retrieval_ms = round((time.time() - t0) * 1000, 1)
 
-    print(f"\n{Colors.DIM}[Step 1: ChromaDB Local Vector Search (all-MiniLM-L6-v2)]{Colors.RESET}")
-    print(f"  Retrieved {len(raw_hits)} candidate chunks in {retrieval_ms}ms:")
-    for i, h in enumerate(raw_hits, 1):
-        dist_color = Colors.GREEN if h["distance"] <= config.MAX_DISTANCE else Colors.RED
-        status = "PASSED" if h["distance"] <= config.MAX_DISTANCE else "FILTERED"
-        print(f"    [{i}] {dist_color}{h['distance']:.4f}{Colors.RESET} | {status:<8} | {h['source']:<24} ({h['title']})")
-
-    # 2. End-to-end execution
     t1 = time.time()
     try:
         out = answer_question(question)
@@ -84,14 +70,19 @@ def run_query(question: str):
         print(f"{Colors.YELLOW}Tip: You can test offline demo mode anytime with: LLM_PROVIDER=mock python scripts/demo.py{Colors.RESET}")
         return
 
-    # 3. Guardrail inspection
-    relevant_count = sum(1 for h in raw_hits if h["distance"] <= config.MAX_DISTANCE)
-    if relevant_count == 0:
-        guard_triggered = "Stage 1 (Cosine Distance Cutoff) - No LLM invoked"
-    elif not out["answerable"]:
-        guard_triggered = "Stage 2 (Model Grounding Refusal) - LLM identified missing facts"
-    else:
-        guard_triggered = "None (Fully Grounded Answer Generated)"
+    raw_hits = out["retrieved"]
+    print(f"\n{Colors.DIM}[Step 1: ChromaDB Local Vector Search (all-MiniLM-L6-v2)]{Colors.RESET}")
+    print(f"  Retrieved {len(raw_hits)} candidate chunks:")
+    for i, h in enumerate(raw_hits, 1):
+        dist_color = Colors.GREEN if h["distance"] <= config.MAX_DISTANCE else Colors.RED
+        status = "PASSED" if h["distance"] <= config.MAX_DISTANCE else "FILTERED"
+        print(f"    [{i}] {dist_color}{h['distance']:.4f}{Colors.RESET} | {status:<8} | {h['source']:<24} ({h['title']})")
+
+    guard_triggered = {
+        "distance": "Stage 1 (Cosine Distance Cutoff) - No LLM invoked",
+        "model": "Stage 2 (Model Grounding Refusal) - LLM said the passages lack the answer",
+        "unparseable": "Model reply could not be parsed (possibly truncated) - refused",
+    }.get(out.get("refused_by"), "None (Fully Grounded Answer Generated)")
 
     print(f"\n{Colors.DIM}[Step 2: Two-Stage Guardrails & Generation ({total_ms}ms)]{Colors.RESET}")
     print(f"  Guardrail Decision: {Colors.BOLD}{guard_triggered}{Colors.RESET}")

@@ -30,7 +30,7 @@ A reliable production RAG system requires measurable proof across both **Retriev
                      |                                               |
          +-----------v-----------+                       +-----------v-----------+
          | LLM Grounded Answer   |                       | Zero-Token Fast Exit  |
-         +-----------+-----------+                       | Refusal Accuracy: 100%|
+         +-----------+-----------+                       | (Stage 2 if it passes)|
                      |                                   +-----------------------+
          +-----------v-----------+
          | LLM-as-a-Judge Eval   |
@@ -75,38 +75,15 @@ The evaluation suite comprises 15 curated scenarios designed to test edge cases,
 
 ---
 
-## 4. Verified Evaluation Results
+## 4. Results
 
-### Primary Benchmark Run: Google Gemini 3.5 Flash
+No results are quoted until a fresh run is committed as `eval/results.json`. Earlier figures in this file were inconsistent with the dataset (e.g. 10/10 hit rate on 11 answerable questions) and the chunking/threshold ablations had no script behind them, so they were removed.
 
-Configuration: `CHUNK_STRATEGY=paragraph`, `CHUNK_SIZE=800`, `TOP_K=4`, `MAX_DISTANCE=0.75`.
-
-| Evaluation Metric | Measured Score | Sample Size / Notes |
-|---|---|---|
-| **Retrieval Hit@4** | **100%** | 10/10 verified answerable queries |
-| **Answer Accuracy (LLM Judge)** | **100%** | 6/6 tested answers aligned with gold-standard references |
-| **Hallucination Rate** | **0%** | 0/6 answers contained unsupported claims |
-| **Refusal Accuracy (Out-of-Domain)** | **100%** | **4/4 refused** without making any LLM call |
-| **False Refusal Rate** | **0%** | 0/10 in-domain queries falsely rejected |
-| **Median Latency ($P_{50}$)** | **0.84s** | Includes vector search, distance filtering, and LLM generation |
-| **Stage 1 Fast Refusal Latency** | **0.71s** | 0 token expenditure on out-of-domain queries |
+Caveat: with 6 docs (~8 chunks) and `TOP_K=4`, retrieval returns about half the corpus, so hit@4 is close to meaningless until the knowledge base grows.
 
 ---
 
-## 5. Ablation Studies & Tuning Insights
-
-### Experiment A: Chunking Strategy (Paragraph vs. Fixed)
-* **Paragraph Chunking (800 chars, 150 overlap):** Preserved complete procedural steps (e.g., all 4 steps to fix VPN error 809 remained in a single chunk). Retrieval Hit@4: **100%**.
-* **Fixed Chunking (400 chars, 100 overlap):** Fragmented instructions across chunk boundaries. Step 1 and Step 2 of the printer spooler procedure were separated from the diagnosis, causing partial citations. Retrieval Hit@4 dropped to **82%**.
-
-### Experiment B: Distance Threshold Tuning (`MAX_DISTANCE`)
-* `MAX_DISTANCE = 0.60`: Overly strict. Caused a **18% False Refusal Rate** on phrasing variations of "computer feels sluggish" ($D_{\text{cos}} \approx 0.612$).
-* `MAX_DISTANCE = 0.75` **(Selected Production Baseline):** Optimal operating point. **0% False Refusal Rate**, **100% Out-of-Domain Refusal**.
-* `MAX_DISTANCE = 0.85`: Overly permissive. Out-of-domain questions leaked past Stage 1 into the LLM, increasing token costs by 26%.
-
----
-
-## 6. How to Reproduce Evaluations
+## 5. How to Reproduce Evaluations
 
 ### 1. Resumable Live Evaluation (with API Key)
 ```bash
@@ -124,4 +101,4 @@ For CI/CD runners or offline assessment without cloud API credentials:
 ```bash
 python -m eval.run_eval --allow-mock
 ```
-Runs the evaluation pipeline against the offline mock engine in < 1 second.
+Runs the pipeline against the offline mock engine. The mock judge always says "true", so this checks that the harness runs, not quality.

@@ -4,6 +4,5 @@ __pycache__/
 .venv/
 node_modules/
 frontend/dist/
-eval/results.json
 eval/.checkpoint.jsonl
 .pytest_cache/

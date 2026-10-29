@@ -22,7 +22,7 @@ graph TD
         QueryEmbed --> VectorSearch["ChromaDB Top-K Search<br/>(Cosine Distance)"]
         VectorSearch --> Stage1{"Stage 1 Guardrail<br/>Min Distance <= 0.75?"}
         
-        Stage1 -- "No (Out of Domain)" --> FastRefusal["Immediate Fast Refusal<br/>(0 Tokens / <30ms)"]
+        Stage1 -- "No (Out of Domain)" --> FastRefusal["Immediate Fast Refusal<br/>(no LLM call)"]
         FastRefusal --> UIResponse(["Standard Refusal Response"])
         
         Stage1 -- "Yes (Passes Cutoff)" --> PromptBuilder["Context & Schema Prompt Builder<br/>[1]..[K] Passages"]
@@ -98,7 +98,7 @@ Hallucination prevention is achieved through two complementary filtering layers:
 
 | Layer | Mechanism | Trigger Condition | Cost Impact | Latency Impact |
 |---|---|---|---|---|
-| **Stage 1 (Embedding Distance Cutoff)** | Cosine distance thresholding in vector space | Minimum retrieved chunk distance $> 0.75$ | **100% cost reduction** (zero LLM tokens used) | **Sub-30ms** refusal response |
+| **Stage 1 (Embedding Distance Cutoff)** | Cosine distance thresholding in vector space | Minimum retrieved chunk distance $> 0.75$ | No LLM tokens | Embedding + vector search only |
 | **Stage 2 (Model Grounding Guardrail)** | Strict JSON schema contract + negative constraint system prompt | LLM outputs `answerable: false` or empty answer | Standard generation token cost | Normal LLM inference latency (~600-1200ms) |
 
 #### Mathematical Rationale for Stage 1:
@@ -107,42 +107,20 @@ Empirical benchmark observations on IT Support domain queries:
 - **Direct in-domain matches:** $D_{\text{cos}} \in [0.15, 0.55]$ (e.g., "VPN error 809" $\to$ 0.2689).
 - **Semantically related in-domain matches:** $D_{\text{cos}} \in [0.55, 0.72]$ (e.g., "computer sluggish" $\to$ 0.6120).
 - **Out-of-domain queries:** $D_{\text{cos}} \ge 0.88$ (e.g., "chocolate chip cookie recipe" $\to$ 0.9920).
-Setting `MAX_DISTANCE = 0.75` establishes a high-confidence boundary that rejects 100% of out-of-domain queries before touching an LLM.
+`MAX_DISTANCE = 0.75` sits between these ranges. It was picked from a handful of queries, so re-tune it with the eval harness when the corpus grows. Unanswerable questions that are close to IT topics (e.g. Linux dual boot) pass this cutoff and are refused by Stage 2 instead.
 
 ### 3.4 Multi-Provider LLM Resilience Layer
 The LLM integration uses an adapter architecture (`app/llm.py`) with:
 * **Auto-Discovery:** Automatically detects available keys in priority order (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
 * **Self-Hosted / Local LLM Compatibility:** Point `OPENAI_BASE_URL` to Ollama (`http://localhost:11434/v1`), LM Studio, or vLLM to run completely air-gapped without cloud providers.
 * **Deterministic Mock Engine:** High-fidelity offline mock implementation enabling CI/CD test execution and automated evaluations without API keys or quota limits.
-* **Exponential Backoff:** Automated retry handler (`retries=4`, backoff: 5s, 10s, 20s, 40s) targeting transient rate-limit (429) and service availability (503) errors.
+* **Exponential Backoff:** Automated retry handler on retryable status codes (429/5xx). The web path retries once (5s) so a provider outage doesn't hang users; the eval keeps 4 retries (5s, 10s, 20s, 40s).
 
 ---
 
-## 4. Latency Budget (End-to-End Breakdown)
-
-Measured on commodity development hardware (x86_64, Windows, Python 3.13):
-
-```
-+---------------------------------------------------------------------------------+
-| Operation                                    Latency Range       P50 Target    |
-+---------------------------------------------------------------------------------+
-| 1. Query Embedding (ONNX MiniLM-L6-v2)       12ms - 25ms         16ms           |
-| 2. ChromaDB HNSW Cosine Index Search          4ms - 12ms          6ms           |
-| 3. Stage 1 Distance Filtering Check           < 0.1ms            < 0.1ms        |
-|    --> (If Rejected: Total Response Time)    [16ms - 38ms]       [23ms]         |
-| 4. Context & JSON Prompt Construction         < 1ms              < 1ms          |
-| 5. LLM Inference (Gemini / Claude / OpenAI)   450ms - 1500ms     750ms          |
-| 6. JSON Parse & Citation Verification         < 1ms              < 1ms          |
-+---------------------------------------------------------------------------------+
-| Total In-Domain Grounded Query Response       480ms - 1550ms     780ms          |
-+---------------------------------------------------------------------------------+
-```
-
----
-
-## 5. Security & Production Considerations
+## 4. Security & Production Considerations
 
 1. **Input Validation:** Pydantic schemas enforce length bounds ($3 \le \text{length} \le 500$ characters) to mitigate token-stuffing attacks and denial-of-wallet vectors.
-2. **Strict Output Parsing:** Model outputs are parsed via `parse_json()` with regex isolation of JSON structures, stripping markdown fences and neutralizing prompt injections attempting to deliver unstructured scripts.
+2. **Strict Output Parsing:** Model outputs are parsed via `parse_json()` with regex isolation of JSON structures, stripping markdown fences. This is parsing, not injection defense: the question is wrapped in `<question>` tags the prompt tells the model to treat as data only, which reduces but does not eliminate prompt-injection risk.
 3. **Citation Bounds Sanitization:** Generated citation lists are bounded to $1 \le c \le K$. Out-of-bounds or non-integer citations returned by the LLM are stripped, preventing array out-of-bounds indexing in downstream consumers.
 4. **Resumable Evaluation Checkpoints:** Long-running evaluations write transactional checkpoints to `.checkpoint.jsonl`, preventing loss of progress across network drops or API rate-limit resets.

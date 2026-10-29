@@ -38,7 +38,7 @@ def test_distance_guardrail_passes_close_chunks(monkeypatch):
     monkeypatch.setattr(
         gen,
         "call_llm",
-        lambda system, user, model=None: '{"answerable": true, "answer": "Switch to TCP.", "citations": [1]}',
+        lambda system, user, **kw: '{"answerable": true, "answer": "Switch to TCP.", "citations": [1]}',
     )
 
     res = answer_question("How do I fix VPN 809?")
@@ -62,7 +62,7 @@ def test_model_guardrail_refusal_when_answerable_false(monkeypatch):
     monkeypatch.setattr(
         gen,
         "call_llm",
-        lambda system, user, model=None: '{"answerable": false, "answer": "", "citations": []}',
+        lambda system, user, **kw: '{"answerable": false, "answer": "", "citations": []}',
     )
 
     res = answer_question("What is the overtime rate?")
@@ -85,7 +85,7 @@ def test_model_guardrail_refusal_on_empty_answer_text(monkeypatch):
     monkeypatch.setattr(
         gen,
         "call_llm",
-        lambda system, user, model=None: '{"answerable": true, "answer": "   ", "citations": [1]}',
+        lambda system, user, **kw: '{"answerable": true, "answer": "   ", "citations": [1]}',
     )
 
     res = answer_question("Tell me something")
@@ -108,7 +108,7 @@ def test_citation_boundary_sanitization(monkeypatch):
     monkeypatch.setattr(
         gen,
         "call_llm",
-        lambda system, user, model=None: '{"answerable": true, "answer": "Use printer.", "citations": [99, 0]}',
+        lambda system, user, **kw: '{"answerable": true, "answer": "Use printer.", "citations": [99, 0]}',
     )
 
     res = answer_question("Which printer?")
@@ -132,7 +132,7 @@ def test_citation_deduplication(monkeypatch):
     monkeypatch.setattr(
         gen,
         "call_llm",
-        lambda system, user, model=None: '{"answerable": true, "answer": "Join Corp-Secure.", "citations": [1, 1, 1]}',
+        lambda system, user, **kw: '{"answerable": true, "answer": "Join Corp-Secure.", "citations": [1, 1, 1]}',
     )
 
     res = answer_question("What is wifi?")

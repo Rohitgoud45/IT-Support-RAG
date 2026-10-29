@@ -17,8 +17,8 @@
 | 2026-10-27 | `scripts/demo.py` | No standalone terminal demonstration | Users without Node.js or browser dev servers could not easily demo the two-stage guardrails and citations | Created interactive colorized CLI demo (`scripts/demo.py`) with preset and custom query modes |
 
 ## Things I verified by hand
-- [x] Refusal behavior on out-of-scope questions (4/4 refused by distance guard with 0 LLM calls and <30ms latency)
+- [x] Refusal behavior on out-of-scope questions (refused by the distance guard or the model; the demo prints which one via `refused_by`)
 - [x] Citations point to the exact source passage used (verified against `vpn-troubleshooting.md`, `password-reset.md`, `printer-setup.md`)
 - [x] No API key hardcoded in the repo or Docker image
-- [x] Full automated test suite running and passing (`24/24` passed in <5 seconds offline)
-- [x] End-to-end evaluation with real LLM (`gemini-3.5-flash`: 100% Hit@4, 100% accuracy, 0% hallucination rate on primary benchmark)
+- [x] Full automated test suite running and passing (offline, temp index, run in CI)
+- [ ] End-to-end evaluation with a real LLM, results committed to `eval/results.json`

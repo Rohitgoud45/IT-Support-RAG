@@ -46,9 +46,14 @@ function Answer({ msg }) {
   }
 
   function handleCopy() {
-    navigator.clipboard.writeText(msg.answer);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    // Clipboard is blocked on plain-http non-localhost pages; only claim success when it worked.
+    navigator.clipboard
+      ?.writeText(msg.answer)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {});
   }
 
   return (

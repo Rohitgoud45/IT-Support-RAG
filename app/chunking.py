@@ -31,7 +31,8 @@ def chunk_paragraph(text: str, size: int = 800, overlap: int = 150) -> list[str]
         else:
             chunks.append(cur)
             tail = cur[-overlap:] if overlap else ""
-            cur = f"{tail}\n\n{p}" if tail else p
+            # Only carry the tail if the chunk still fits in `size`.
+            cur = f"{tail}\n\n{p}" if tail and len(tail) + len(p) + 2 <= size else p
     if cur:
         chunks.append(cur)
     return chunks

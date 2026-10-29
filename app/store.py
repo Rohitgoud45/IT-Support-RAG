@@ -1,4 +1,5 @@
 import chromadb
+from chromadb.errors import NotFoundError
 
 from . import config
 
@@ -22,6 +23,6 @@ def get_collection():
 def reset_collection():
     try:
         _client_instance().delete_collection(config.COLLECTION)
-    except Exception:
+    except NotFoundError:  # first run: nothing to delete. Any other error must surface.
         pass
     return get_collection()

@@ -1,20 +1,19 @@
 # Enterprise IT Support Assistant (RAG)
 
-An enterprise-grade, retrieval-augmented generation (RAG) assistant that resolves technical IT queries grounded in verified documentation with interactive source citations. Engineered with a **two-stage refusal guardrail** that mathematically and semantically eliminates hallucinations on out-of-scope or unanswerable queries.
+An enterprise-grade, retrieval-augmented generation (RAG) assistant that resolves technical IT queries grounded in verified documentation with interactive source citations. Engineered with a **two-stage refusal guardrail** that refuses instead of guessing when the knowledge base doesn't cover a question.
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-green.svg)](https://fastapi.tiangolo.com/)
 [![ChromaDB](https://img.shields.io/badge/Vector%20Store-ChromaDB%20(Local%20ONNX)-orange.svg)](https://www.trychroma.com/)
 [![React](https://img.shields.io/badge/Frontend-React%2018%20(Vite)-61dafb.svg)](https://react.dev/)
-[![Tests](https://img.shields.io/badge/Tests-24%2F24%20Passing-brightgreen.svg)](tests/)
+[![test](https://github.com/Rohitgoud45/IT-Support-RAG/actions/workflows/test.yml/badge.svg)](https://github.com/Rohitgoud45/IT-Support-RAG/actions/workflows/test.yml)
 
 ---
 
 ## Technical Documentation & Portfolios
 
 * **[Architecture & Deep Design Specification](docs/ARCHITECTURE.md):** Complete component breakdown, sequence diagrams, latency budgets, and engineering trade-offs.
-* **[Evaluation Benchmark & Quality Proof](docs/EVALUATION.md):** Formal metric definitions, 15-scenario golden dataset, ablation studies (paragraph vs. fixed chunking, distance tuning), and verified results.
-* **[Candidate Resume Bullets & Interview Talking Points](docs/RESUME_BULLETS.md):** High-impact resume bullet points, interview Q&A responses, and LinkedIn showcase post copy.
+* **[Evaluation Benchmark & Quality Proof](docs/EVALUATION.md):** Formal metric definitions, 15-scenario golden dataset, ablation studies and how to reproduce them.
 * **[AI Code Review & Verification Log](docs/AI_CODE_REVIEW.md):** Engineering audit log detailing critical fixes made to AI-generated code.
 
 ---
@@ -34,7 +33,7 @@ graph TD
         Search --> DB
         Search --> G1{"Stage 1 Guardrail<br/>Cosine Distance <= 0.75?"}
         
-        G1 -- "No (> 0.75)" --> FastExit["Immediate Refusal<br/>(0 Tokens / <30ms)"]
+        G1 -- "No (> 0.75)" --> FastExit["Immediate Refusal<br/>(no LLM call)"]
         G1 -- "Yes (<= 0.75)" --> Prompt["Grounding & Schema Prompt<br/>[1]..[4] Context Passages"]
         Prompt --> LLM["Multi-Provider LLM<br/>(Gemini / OpenAI / Claude / Ollama / Mock)"]
         LLM --> G2{"Stage 2 Guardrail<br/>answerable == true?"}
@@ -48,7 +47,7 @@ graph TD
 ### Core Technical Highlights
 1. **Local Privacy-Preserving Vector Pipeline:** Vectors are generated locally via ChromaDB's embedded ONNX runtime (`all-MiniLM-L6-v2`). Internal enterprise IT documentation never leaves the host environment during ingestion or query vectorization.
 2. **Two-Stage Refusal Guardrails:**
-   - **Stage 1 (Embedding Distance Cutoff):** Queries with minimum cosine distance $> 0.75$ are refused immediately without invoking an LLM, reducing inference spend by 100% on out-of-domain queries and returning in $<30$ms.
+   - **Stage 1 (Embedding Distance Cutoff):** Queries with minimum cosine distance $> 0.75$ are refused immediately without invoking an LLM, so out-of-domain queries cost no LLM tokens.
    - **Stage 2 (Model Grounding & Schema Guardrail):** Enforces a strict JSON contract (`{"answerable": bool, "answer": str, "citations": list[int]}`). If context is missing required facts, the LLM refuses without guessing.
 3. **Resilient Multi-Provider Adapter:** Supports Google Gemini, OpenAI, Anthropic, local self-hosted endpoints (Ollama / LM Studio / vLLM via `OPENAI_BASE_URL`), and a high-fidelity offline mock mode with automated exponential backoff.
 
@@ -62,7 +61,7 @@ FastAPI serves both the REST API and the pre-compiled React single-page applicat
 ```bash
 # 1. Setup virtual environment & dependencies
 python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # runtime deps + pytest
 cp .env.example .env
 
 # 2. Build index and launch unified application
@@ -93,7 +92,7 @@ docker compose up --build      # http://localhost:8000
 
 ## Reproducible Automated Tests
 
-The test suite includes **24 passing tests** verifying the entire RAG lifecycle. Tests run **100% offline**, deterministically, and in under 5 seconds with zero external API dependencies:
+Tests run offline against a mock LLM and build their own temporary index, so they pass on a fresh clone without touching `chroma_db/`. CI runs them on every push (first run downloads the local embedding model):
 
 ```bash
 pytest
@@ -108,17 +107,7 @@ pytest
 
 ## Documented Evaluation Benchmark
 
-Empirical evaluation results on the 15-scenario golden benchmark dataset (`eval/questions.jsonl`):
-
-| Metric | Measured Result | Benchmark Standard |
-|---|---|---|
-| **Retrieval Hit@4 Recall** | **100% (10/10)** | Expected document present in top-4 retrieved chunks |
-| **Answer Accuracy (LLM Judge)** | **100% (6/6)** | Candidate answer aligns with authoritative reference |
-| **Hallucination / Faithfulness** | **0% (0/6)** | Zero unsupported claims across generated answers |
-| **Refusal Accuracy (Out-of-Domain)** | **100% (4/4)** | Correct refusal on out-of-scope queries (Stage 1 Cutoff) |
-| **False Refusal Rate** | **0% (0/10)** | In-domain technical questions falsely rejected |
-| **P50 Latency (In-Domain)** | **0.84s** | Full vector search, guardrail filtering, and LLM inference |
-| **P50 Latency (Refusal)** | **0.71s** | Fast exit without external LLM token expenditure |
+The harness scores 15 questions (11 answerable, 4 unanswerable) in `eval/questions.jsonl` and writes `eval/results.json`. Numbers are not quoted here until a fresh run is committed; at this corpus size (6 docs, ~8 chunks) top-4 retrieval returns half the knowledge base, so hit@4 says little.
 
 ### Run the Evaluation Harness
 ```bash
@@ -128,7 +117,7 @@ python -m eval.run_eval
 # Deterministic offline evaluation (CI/CD smoke test):
 python -m eval.run_eval --allow-mock
 ```
-See **[docs/EVALUATION.md](docs/EVALUATION.md)** for in-depth ablation studies and threshold tuning analysis.
+See **[docs/EVALUATION.md](docs/EVALUATION.md)** for metric definitions.
 
 ---
 
@@ -149,11 +138,10 @@ it-support-rag/
 ├── docs/
 │   ├── ARCHITECTURE.md   # Comprehensive system architecture & design specification
 │   ├── EVALUATION.md     # Evaluation framework, benchmark results, & ablation studies
-│   ├── RESUME_BULLETS.md # Candidate resume bullets, interview talking points, & LinkedIn copy
 │   └── AI_CODE_REVIEW.md # Review checklist & verification log of AI pair programming
 ├── eval/
 │   ├── questions.jsonl   # 15 golden evaluation scenarios (11 in-domain, 4 out-of-domain)
-│   ├── results.json      # Machine-readable evaluation metrics & configuration
+│   ├── results.json      # Written by run_eval.py; commit it after a real run
 │   └── run_eval.py       # Resumable evaluation harness with LLM-as-a-judge
 ├── frontend/             # React + Vite single-page application with citation explorer
 ├── scripts/
@@ -163,6 +151,13 @@ it-support-rag/
 │   ├── test_core.py      # Core unit tests for chunking, parsing, retrieval, and API
 │   ├── test_guardrails.py# Dedicated boundary tests for Stage 1 & Stage 2 guardrails
 │   └── test_api_endpoints.py # Validation & API contract tests
+├── .github/workflows/    # CI: pytest on every push
+├── requirements.txt      # Pinned runtime dependencies
+├── requirements-dev.txt  # + pytest
 ├── pytest.ini            # Pytest configuration with pythonpath discovery
 └── Dockerfile            # Container definition for unified full-stack deployment
 ```
+
+## Deployment note
+
+`/api/ask` has no login or rate limit, and each question that passes the distance check is a paid LLM call. Run it on an internal network or behind a VPN, or add a per-IP rate limit at your reverse proxy before exposing it publicly.

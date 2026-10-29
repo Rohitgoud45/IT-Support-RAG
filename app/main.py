@@ -15,9 +15,8 @@ log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # Build the index on first boot so a fresh container works with no manual step.
-    if get_collection().count() == 0:
-        ingest(reset=False)
+    # Rebuild on every boot so doc edits show up after a restart (6 docs: ~1s).
+    ingest(reset=True)
     yield
 
 
@@ -30,13 +29,12 @@ class AskRequest(BaseModel):
 
 @app.get("/api/health")
 def health():
-    from .llm import get_active_provider
-    provider = get_active_provider()
+    from .llm import get_active_provider, get_effective_model
     return {
         "status": "ok",
         "chunks": get_collection().count(),
-        "provider": provider,
-        "model": config.LLM_MODEL or config.get_default_model(provider),
+        "provider": get_active_provider(),
+        "model": get_effective_model(),
     }
 
 

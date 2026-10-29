@@ -12,11 +12,10 @@ def _title(text: str, fallback: str) -> str:
 
 
 def ingest(reset: bool = True) -> int:
-    files = sorted(p for p in config.DOCS_DIR.rglob("*") if p.suffix in {".md", ".txt"})
+    files = sorted(p for p in config.DOCS_DIR.rglob("*") if p.suffix.lower() in {".md", ".txt"})
     if not files:
         print(f"No .md/.txt files found in {config.DOCS_DIR}")
         return 0
-    col = reset_collection() if reset else get_collection()
     ids, docs, metas = [], [], []
     for path in files:
         text = path.read_text(encoding="utf-8")
@@ -28,6 +27,11 @@ def ingest(reset: bool = True) -> int:
             ids.append(f"{rel}::{i}")
             docs.append(chunk)
             metas.append({"source": rel, "title": title, "chunk": i})
+    if not ids:
+        print(f"All files in {config.DOCS_DIR} are empty; nothing to index.")
+        return 0
+    # Reset only after chunks are ready, so an empty or unreadable docs dir keeps the old index.
+    col = reset_collection() if reset else get_collection()
     col.add(ids=ids, documents=docs, metadatas=metas)
     print(f"Ingested {len(files)} files into {len(ids)} chunks ({config.CHUNK_STRATEGY} strategy).")
     return len(ids)
