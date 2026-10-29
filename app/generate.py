@@ -1,7 +1,11 @@
 """Retrieve -> guard -> generate grounded answer with citations."""
+import logging
+
 from . import config
 from .llm import call_llm, parse_json
 from .retrieval import retrieve
+
+log = logging.getLogger(__name__)
 
 NO_ANSWER_TEXT = (
     "I couldn't find this in the knowledge base, so I won't guess. "
@@ -21,6 +25,21 @@ def _format_context(hits: list[dict]) -> str:
     return "\n\n".join(f"[{i}] ({h['title']})\n{h['text']}" for i, h in enumerate(hits, 1))
 
 
+def _citation_numbers(raw, n_passages: int) -> list[int]:
+    """Keep valid 1-based passage numbers; models sometimes send them as strings."""
+    if not isinstance(raw, list):
+        return []
+    nums = []
+    for c in raw:
+        if isinstance(c, bool):
+            continue
+        if isinstance(c, str) and c.strip().isdigit():
+            c = int(c.strip())
+        if isinstance(c, int) and 1 <= c <= n_passages:
+            nums.append(c)
+    return nums
+
+
 def _no_answer(retrieved: list[dict]) -> dict:
     return {"answerable": False, "answer": NO_ANSWER_TEXT, "sources": [], "retrieved": retrieved}
 
@@ -36,14 +55,15 @@ def answer_question(question: str, k: int | None = None) -> dict:
     try:
         data = parse_json(raw)
     except ValueError:
+        # Often a reply truncated by max_tokens; refuse, but leave a trace.
+        log.warning("Unparseable model reply, refusing: %r", raw[:200])
         return _no_answer(retrieved)
 
     # Guard 2: the model itself says the context does not answer it.
     if not data.get("answerable") or not str(data.get("answer", "")).strip():
         return _no_answer(retrieved)
 
-    cited = [c for c in data.get("citations", []) if isinstance(c, int) and 1 <= c <= len(relevant)]
-    cited = cited or [1]
+    cited = _citation_numbers(data.get("citations"), len(relevant)) or [1]
     sources = [
         {
             "id": n,

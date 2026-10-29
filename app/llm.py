@@ -125,7 +125,17 @@ def _call_mock(system: str, user: str) -> str:
     })
 
 
-_RETRYABLE = ("429", "rate", "resource_exhausted", "503", "unavailable", "overloaded")
+_RETRYABLE_STATUS = {429, 500, 502, 503, 504, 529}
+# Whole-word match so e.g. "generateContent" in a 404 message doesn't look like "rate".
+_RETRYABLE_TEXT = re.compile(r"\b(429|503|rate[ _-]?limit\w*|resource_exhausted|unavailable|overloaded)\b")
+
+
+def _is_retryable(exc: Exception) -> bool:
+    # openai/anthropic expose .status_code, google-genai exposes .code
+    status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if isinstance(status, int):
+        return status in _RETRYABLE_STATUS
+    return bool(_RETRYABLE_TEXT.search(str(exc).lower()))
 
 
 def get_effective_model(model: Optional[str] = None) -> str:
@@ -161,7 +171,7 @@ def call_llm(
         except Exception as exc:  # noqa: BLE001 - provider SDKs raise different types
             msg = str(exc).lower()
             daily_quota = "perday" in msg  # resets in hours -- retrying only wastes time
-            if attempt == retries or daily_quota or not any(k in msg for k in _RETRYABLE):
+            if attempt == retries or daily_quota or not _is_retryable(exc):
                 raise
             time.sleep(min(2 ** attempt * 5, 60))  # 5s, 10s, 20s, 40s
     raise RuntimeError("unreachable")

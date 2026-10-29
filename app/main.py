@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -10,6 +11,7 @@ from .generate import answer_question
 from .ingest import ingest
 from .store import get_collection
 
+log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -42,8 +44,11 @@ def health():
 def ask(req: AskRequest):
     try:
         result = answer_question(req.question.strip())
-    except Exception as exc:  # surface a clean error to the UI
-        raise HTTPException(status_code=502, detail=f"Answer generation failed: {exc}") from exc
+    except Exception as exc:  # log the details, give the UI a clean message
+        log.exception("Answer generation failed")
+        raise HTTPException(
+            status_code=502, detail="Answer generation failed. Please try again in a moment."
+        ) from exc
     result.pop("retrieved", None)  # internal, used by the eval harness
     return result
 
@@ -53,4 +58,6 @@ if config.FRONTEND_DIST.exists():
 
     @app.get("/{path:path}")
     def spa(path: str):
+        if path == "api" or path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not Found")
         return FileResponse(config.FRONTEND_DIST / "index.html")

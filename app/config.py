@@ -20,7 +20,7 @@ def get_default_model(provider: str) -> str:
     elif provider == "openai":
         return "gpt-4o-mini"
     elif provider == "anthropic":
-        return "claude-3-5-sonnet-20241022"
+        return "claude-sonnet-5-5"
     return "mock"
 
 LLM_MODEL = os.getenv("LLM_MODEL", "")
