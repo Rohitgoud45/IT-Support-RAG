@@ -1,0 +1,158 @@
+{
+  "summary": {
+    "n_questions": 15,
+    "retrieval_hit_rate": "100% (11/11)",
+    "answer_accuracy": "100% (11/11)",
+    "hallucination_rate": "0% (0/11)",
+    "refusal_accuracy_unanswerable": "100% (4/4)",
+    "false_refusal_rate": "0% (0/11)",
+    "median_latency_s": 0.23,
+    "config": {
+      "chunk_strategy": "paragraph",
+      "chunk_size": 800,
+      "top_k": 4,
+      "max_distance": 0.75,
+      "model": ""
+    }
+  },
+  "results": [
+    {
+      "question": "What does VPN error 809 mean and how do I fix it?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.52,
+      "answer": "# VPN won't connect\nBefore anything else, confirm you have working internet access by opening any public website.\nIf the VPN client shows error 809 on Windows, the network is blocking UDP ports 500 and 4500, which is common on hotel, airport and some home routers. Open the VPN client, choose the profile named Northwind-TCP instead of Northwind-UDP, and connect again. The TCP profile uses port 443, which is rarely blocked.\nIf the client reports \"Authentication failed\", your password has probably expired or your account is locked. Reset your password in the self-service portal, then try again.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "How often do passwords expire?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.23,
+      "answer": "# Password reset and account lockout\nYou can reset your own password in the self-service portal. Sign in with MFA, choose \"Reset password\", and pick a new one.\nPassword rules: at least 14 characters, and you cannot reuse your last 10 passwords. Passwords expire every 90 days, and you get an email reminder 14 days before expiry.\nAfter 5 failed sign-in attempts your account is locked for 30 minutes. The lock clears on its own. If you cannot wait, the help desk can unlock it after verifying your identity.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "How long is my account locked after too many failed logins?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.27,
+      "answer": "# Password reset and account lockout\nYou can reset your own password in the self-service portal. Sign in with MFA, choose \"Reset password\", and pick a new one.\nPassword rules: at least 14 characters, and you cannot reuse your last 10 passwords. Passwords expire every 90 days, and you get an email reminder 14 days before expiry.\nAfter 5 failed sign-in attempts your account is locked for 30 minutes. The lock clears on its own. If you cannot wait, the help desk can unlock it after verifying your identity.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "Which printer do I use on the third floor?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.23,
+      "answer": "# Printer setup and print problems\nTo add a printer, open Software Center and install the driver package named \"Office Print Drivers\". Then open Settings, Printers and scanners, choose Add device, and enter the path \\\\printserver\\ followed by the printer name.\nThe shared printer on the third floor is named PRN-3F-01. The second floor printer is PRN-2F-01.\nIf documents are stuck in the queue, open the Services app, restart the Print Spooler service, then delete the stuck jobs from the printer queue and print again.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "My print jobs are stuck, what should I do?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.25,
+      "answer": "# Printer setup and print problems\nTo add a printer, open Software Center and install the driver package named \"Office Print Drivers\". Then open Settings, Printers and scanners, choose Add device, and enter the path \\\\printserver\\ followed by the printer name.\nThe shared printer on the third floor is named PRN-3F-01. The second floor printer is PRN-2F-01.\nIf documents are stuck in the queue, open the Services app, restart the Print Spooler service, then delete the stuck jobs from the printer queue and print again.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "Where can I find the guest wifi password?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.26,
+      "answer": "# Wi-Fi connection\nCompany laptops connect to the Corp-Secure network, which authenticates with a device certificate and does not ask for a password. Visitors use Corp-Guest. The Corp-Guest password changes every week and is posted at the reception desk.\nIf you see a certificate error on Corp-Secure, open Software Center and run \"Enroll device certificate\", then disconnect and reconnect to the network.\nIf Wi-Fi is slow or drops, forget the network, reconnect, and prefer the 5 GHz band, which is less crowded than 2.4 GHz.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "I get a certificate error on Corp-Secure. What now?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.23,
+      "answer": "# Wi-Fi connection\nCompany laptops connect to the Corp-Secure network, which authenticates with a device certificate and does not ask for a password. Visitors use Corp-Guest. The Corp-Guest password changes every week and is posted at the reception desk.\nIf you see a certificate error on Corp-Secure, open Software Center and run \"Enroll device certificate\", then disconnect and reconnect to the network.\nIf Wi-Fi is slow or drops, forget the network, reconnect, and prefer the 5 GHz band, which is less crowded than 2.4 GHz.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "Can I use text messages for MFA codes?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.22,
+      "answer": "# Multi-factor authentication (MFA)\nInstall an authenticator app on your phone, then open the security portal and choose \"Add authenticator\". Scan the QR code shown on screen and enter the six digit code to finish.\nSMS text messages are not supported for MFA.\nWhen you enroll, the portal gives you 10 one-time backup codes. Store them somewhere safe; each code works once.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "I lost my phone and can't pass MFA. How do I get back in?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.22,
+      "answer": "# Multi-factor authentication (MFA)\nInstall an authenticator app on your phone, then open the security portal and choose \"Add authenticator\". Scan the QR code shown on screen and enter the six digit code to finish.\nSMS text messages are not supported for MFA.\nWhen you enroll, the portal gives you 10 one-time backup codes. Store them somewhere safe; each code works once.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "When is a laptop eligible for a refresh?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.21,
+      "answer": "# Laptop running slowly\nStart by restarting your laptop. Restart at least once a week, because sleep and hibernate do not clear memory fully.\nCheck free disk space in File Explorer. Keep at least 15 percent of the drive free. Run \"Disk Cleanup\" from Software Center if you are below that.\nOpen Task Manager, go to the Startup tab, and disable apps you do not need at login. Install pending Windows updates.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "My computer feels sluggish. What should I check first?",
+      "answerable_gt": true,
+      "answered": true,
+      "latency_s": 0.21,
+      "answer": "# Laptop running slowly\nStart by restarting your laptop. Restart at least once a week, because sleep and hibernate do not clear memory fully.\nCheck free disk space in File Explorer. Keep at least 15 percent of the drive free. Run \"Disk Cleanup\" from Software Center if you are below that.\nOpen Task Manager, go to the Startup tab, and disable apps you do not need at login. Install pending Windows updates.\n\n(Note: offline demo mode active. Configure an API key in .env for full LLM answers.)",
+      "hit": true,
+      "correct": true,
+      "faithful": true
+    },
+    {
+      "question": "How do I set up a Linux dual boot on my laptop?",
+      "answerable_gt": false,
+      "answered": false,
+      "latency_s": 0.21,
+      "answer": "I couldn't find this in the knowledge base, so I won't guess. Please open a ticket with the help desk."
+    },
+    {
+      "question": "What is the company parental leave policy?",
+      "answerable_gt": false,
+      "answered": false,
+      "latency_s": 0.22,
+      "answer": "I couldn't find this in the knowledge base, so I won't guess. Please open a ticket with the help desk."
+    },
+    {
+      "question": "How do I configure workflows in Jira?",
+      "answerable_gt": false,
+      "answered": false,
+      "latency_s": 0.22,
+      "answer": "I couldn't find this in the knowledge base, so I won't guess. Please open a ticket with the help desk."
+    },
+    {
+      "question": "How do I recover a file deleted from the shared network drive?",
+      "answerable_gt": false,
+      "answered": false,
+      "latency_s": 0.27,
+      "answer": "I couldn't find this in the knowledge base, so I won't guess. Please open a ticket with the help desk."
+    }
+  ]
+}
