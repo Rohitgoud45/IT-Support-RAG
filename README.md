@@ -1,14 +1,3 @@
----
-title: IT Support RAG
-emoji: 🛠️
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 8000
-pinned: false
-short_description: RAG IT help desk that refuses instead of guessing
----
-
 # Enterprise IT Support Assistant (RAG)
 
 An enterprise-grade, retrieval-augmented generation (RAG) assistant that resolves technical IT queries grounded in verified documentation with interactive source citations. Engineered with a **two-stage refusal guardrail** that refuses instead of guessing when the knowledge base doesn't cover a question.
@@ -19,7 +8,7 @@ An enterprise-grade, retrieval-augmented generation (RAG) assistant that resolve
 [![React](https://img.shields.io/badge/Frontend-React%2018%20(Vite)-61dafb.svg)](https://react.dev/)
 [![test](https://github.com/Rohitgoud45/IT-Support-RAG/actions/workflows/test.yml/badge.svg)](https://github.com/Rohitgoud45/IT-Support-RAG/actions/workflows/test.yml)
 
-**Live demo:** _link goes here once the Hugging Face Space is up_
+**Live demo:** https://it-support-rag-3v71.onrender.com (free hosting, so the first visit can take about a minute to wake up)
 
 Try an IT question ("VPN says error 809"), then something off-topic ("how do I bake cookies?") and see it refuse, along with which guardrail stopped it and why.
 
@@ -167,21 +156,22 @@ it-support-rag/
 │   ├── test_core.py      # Core unit tests for chunking, parsing, retrieval, and API
 │   ├── test_guardrails.py# Dedicated boundary tests for Stage 1 & Stage 2 guardrails
 │   └── test_api_endpoints.py # Validation & API contract tests
-├── .github/workflows/    # CI: pytest on every push; deploy to Hugging Face after tests pass
+├── .github/workflows/    # CI: pytest on every push
 ├── requirements.txt      # Pinned runtime dependencies
 ├── requirements-dev.txt  # + pytest
 ├── pytest.ini            # Pytest configuration with pythonpath discovery
 └── Dockerfile            # Container definition for unified full-stack deployment
 ```
 
-## Deployment (Hugging Face Spaces)
+## Deployment (Render)
 
-The repo runs as a Docker Space with no changes; the YAML block at the top of this README is the Space config.
+The live demo runs on Render's free plan straight from this repo's `Dockerfile`:
 
-1. Create a Space on huggingface.co with SDK **Docker** (blank template).
-2. In the Space settings, add a secret `GEMINI_API_KEY` (a free key from Google AI Studio works). Without a key the app runs in offline mock mode.
-3. In this GitHub repo, add secret `HF_TOKEN` (a Hugging Face write token) and variable `HF_SPACE` (e.g. `your-name/it-support-rag`).
-4. Push to `main`. After tests pass, `.github/workflows/deploy-hf.yml` pushes the code to the Space and it rebuilds.
+1. New Web Service → Public Git Repository → this repo's URL. Render detects Docker.
+2. Pick the Free instance and add `GEMINI_API_KEY` (and optionally `LLM_PROVIDER=gemini`) as environment variables.
+3. Deploy. Render sets `PORT`, which the container already uses.
+
+Free instances sleep after about 15 minutes idle, so the first request after that is slow. To ship new code, use **Manual Deploy → Deploy latest commit** in the Render dashboard.
 
 ### Abuse limits
 
