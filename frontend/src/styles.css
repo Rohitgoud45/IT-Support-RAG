@@ -473,3 +473,19 @@ form button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Why a question was refused, and per-answer timing */
+.why {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+.meta {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}

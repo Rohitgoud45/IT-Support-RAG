@@ -33,3 +33,7 @@ MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.75"))
 CHUNK_STRATEGY = os.getenv("CHUNK_STRATEGY", "paragraph")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "800"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
+
+# Abuse limits for a public demo (0 turns a limit off).
+RATE_LIMIT_PER_MIN = int(os.getenv("RATE_LIMIT_PER_MIN", "8"))
+DAILY_LLM_CALLS = int(os.getenv("DAILY_LLM_CALLS", "300"))

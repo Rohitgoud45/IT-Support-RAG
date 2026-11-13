@@ -10,13 +10,13 @@ A reliable production RAG system requires measurable proof across both **Retriev
 
 ```
                               +----------------------------+
-                              |   Golden Questions (15)    |
+                              |   Golden Questions (25)    |
                               |    eval/questions.jsonl    |
                               +--------------+-------------+
                                              |
                      +-----------------------+-----------------------+
                      |                                               |
-             [Answerable: 11]                               [Unanswerable: 4]
+             [Answerable: 20]                               [Unanswerable: 5]
                      |                                               |
          +-----------v-----------+                       +-----------v-----------+
          | Top-K Vector Search   |                       | Top-K Vector Search   |
@@ -56,9 +56,9 @@ A reliable production RAG system requires measurable proof across both **Retriev
 
 ## 3. Benchmark Dataset Taxonomy (`eval/questions.jsonl`)
 
-The evaluation suite comprises 15 curated scenarios designed to test edge cases, procedural multi-step instructions, and out-of-scope refusal boundaries:
+The evaluation suite comprises 25 curated scenarios designed to test edge cases, procedural multi-step instructions, and out-of-scope refusal boundaries:
 
-### In-Domain Scenarios (11 Questions)
+### In-Domain Scenarios (20 Questions)
 1. **VPN Troubleshooting:** Error 809 port blocking and protocol switching (UDP $\to$ TCP 443).
 2. **Account Security:** Password expiration intervals (90 days) and lockout duration (30 mins after 5 attempts).
 3. **Hardware & Facilities:** Floor-specific shared network printer naming conventions (`PRN-3F-01`).
@@ -66,12 +66,19 @@ The evaluation suite comprises 15 curated scenarios designed to test edge cases,
 5. **Corporate WiFi:** Guest password rotation policy and enterprise 802.1x certificate enrollment errors.
 6. **MFA Authentication:** SMS policy enforcement (disallowed) and recovery workflow for lost hardware tokens.
 7. **Device Lifecycle:** Laptop hardware refresh eligibility (4-year threshold) and diagnostics for sluggish machines.
+8. **Email & Outlook:** Disconnected profile repair and the 50 GB mailbox limit.
+9. **Software Requests:** Request turnaround (3 business days) and time-limited admin access.
+10. **Teams:** Microphone troubleshooting in meetings.
+11. **SharePoint Files:** Recycle Bin restore window (93 days), including the old "shared network drive" phrasing.
+12. **Security Incidents:** What to do after clicking a phishing link.
+13. **New Laptops:** Old-device return window (14 days).
 
-### Out-of-Domain & Refusal Scenarios (4 Questions)
+### Out-of-Domain & Refusal Scenarios (5 Questions)
 1. **Unsupported OS Customization:** "How do I set up a Linux dual boot on my laptop?"
 2. **HR / Non-IT Policy:** "What is the company parental leave policy?"
 3. **Project Management Tooling:** "How do I configure workflows in Jira?"
-4. **Data Recovery Edge Cases:** "How do I recover a file deleted from the shared network drive?"
+4. **Finance Process:** "How do I submit an expense report?"
+5. **Out-of-Scope Engineering:** "How do I set up a Kubernetes cluster on AWS?"
 
 ---
 
@@ -79,7 +86,7 @@ The evaluation suite comprises 15 curated scenarios designed to test edge cases,
 
 No results are quoted until a fresh run is committed as `eval/results.json`. Earlier figures in this file were inconsistent with the dataset (e.g. 10/10 hit rate on 11 answerable questions) and the chunking/threshold ablations had no script behind them, so they were removed.
 
-Caveat: with 6 docs (~8 chunks) and `TOP_K=4`, retrieval returns about half the corpus, so hit@4 is close to meaningless until the knowledge base grows.
+Caveat: the knowledge base is now 12 docs (about 15 chunks). With `TOP_K=4` retrieval still returns a good share of the corpus, so treat hit@4 as a sanity check, not a strong signal.
 
 ---
 

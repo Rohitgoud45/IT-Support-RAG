@@ -25,3 +25,13 @@ def test_index():
 def default_mock_llm(monkeypatch):
     """Ensure test suite runs deterministically, fast, and offline without external API quota leaks."""
     monkeypatch.setenv("LLM_PROVIDER", "mock")
+
+
+@pytest.fixture(autouse=True)
+def fresh_rate_limits():
+    """Every test starts with empty per-IP and daily counters."""
+    from app import ratelimit
+
+    ratelimit.reset()
+    yield
+    ratelimit.reset()

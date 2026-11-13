@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -9,13 +9,14 @@ from pydantic import BaseModel, Field
 from . import config
 from .generate import answer_question
 from .ingest import ingest
+from .ratelimit import BudgetExceeded, per_ip_limit
 from .store import get_collection
 
 log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # Rebuild on every boot so doc edits show up after a restart (6 docs: ~1s).
+    # Rebuild on every boot so doc edits show up after a restart (12 small docs: ~1s).
     ingest(reset=True)
     yield
 
@@ -38,10 +39,15 @@ def health():
     }
 
 
-@app.post("/api/ask")
+@app.post("/api/ask", dependencies=[Depends(per_ip_limit)])
 def ask(req: AskRequest):
     try:
         result = answer_question(req.question.strip())
+    except BudgetExceeded:
+        raise HTTPException(
+            status_code=503,
+            detail="The demo has used up today's AI budget. Please come back tomorrow.",
+        ) from None
     except Exception as exc:  # log the details, give the UI a clean message
         log.exception("Answer generation failed")
         raise HTTPException(

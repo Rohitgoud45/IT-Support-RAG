@@ -1,8 +1,10 @@
 """Retrieve -> guard -> generate grounded answer with citations."""
 import logging
+import time
 
 from . import config
 from .llm import call_llm, parse_json
+from .ratelimit import take_llm_call
 from .retrieval import retrieve
 
 log = logging.getLogger(__name__)
@@ -46,11 +48,24 @@ def _no_answer(retrieved: list[dict], refused_by: str) -> dict:
 
 
 def answer_question(question: str, k: int | None = None) -> dict:
+    """Same as _answer, plus timing and retrieval info the UI shows."""
+    start = time.perf_counter()
+    result = _answer(question, k)
+    hits = result["retrieved"]
+    result["best_distance"] = round(min(h["distance"] for h in hits), 3) if hits else None
+    result["max_distance"] = config.MAX_DISTANCE
+    result["latency_ms"] = int((time.perf_counter() - start) * 1000)
+    return result
+
+
+def _answer(question: str, k: int | None = None) -> dict:
     retrieved = retrieve(question, k)
     # Guard 1: nothing close enough -> refuse without calling the LLM.
     relevant = [h for h in retrieved if h["distance"] <= config.MAX_DISTANCE]
     if not relevant:
         return _no_answer(retrieved, "distance")
+
+    take_llm_call()  # raises BudgetExceeded once today's demo budget is spent
 
     q = question.replace("</question>", "")  # stop the user closing the tag early
     user = f"Context:\n{_format_context(relevant)}\n\nQuestion: <question>{q}</question>"

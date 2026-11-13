@@ -12,4 +12,14 @@
 {"question": "How do I set up a Linux dual boot on my laptop?", "answerable": false, "expected_source": null, "reference": ""}
 {"question": "What is the company parental leave policy?", "answerable": false, "expected_source": null, "reference": ""}
 {"question": "How do I configure workflows in Jira?", "answerable": false, "expected_source": null, "reference": ""}
-{"question": "How do I recover a file deleted from the shared network drive?", "answerable": false, "expected_source": null, "reference": ""}
+{"question": "How do I recover a file deleted from the shared network drive?", "answerable": true, "expected_source": "shared-drive-access.md", "reference": "Restore it from the SharePoint site's Recycle Bin within 93 days; after that open a ticket (backups kept 1 year)."}
+{"question": "Outlook keeps saying Disconnected but webmail works. How do I fix it?", "answerable": true, "expected_source": "email-outlook.md", "reference": "Create a new Outlook profile in Control Panel > Mail > Show Profiles and set it as default."}
+{"question": "What is the mailbox size limit?", "answerable": true, "expected_source": "email-outlook.md", "reference": "50 GB; warning at 49 GB, sending blocked at 50 GB."}
+{"question": "How long does a software request usually take?", "answerable": true, "expected_source": "software-install.md", "reference": "Most are completed within 3 business days."}
+{"question": "People can't hear me in a Teams meeting. What should I check?", "answerable": true, "expected_source": "teams-meetings.md", "reference": "Check the microphone in Teams Device settings and that Windows hasn't muted it."}
+{"question": "How long can I restore a deleted file from SharePoint?", "answerable": true, "expected_source": "shared-drive-access.md", "reference": "93 days from the site Recycle Bin; after that backups are kept for 1 year via a ticket."}
+{"question": "I clicked a link in a phishing email. What do I do?", "answerable": true, "expected_source": "phishing-security.md", "reference": "Reset your password right away and call the security hotline at extension 5555."}
+{"question": "How long do I have to return my old laptop?", "answerable": true, "expected_source": "new-laptop-setup.md", "reference": "Within 14 days."}
+{"question": "Can I get permanent local admin rights on my laptop?", "answerable": true, "expected_source": "software-install.md", "reference": "No; developers can request a time-limited admin account that expires after 8 hours."}
+{"question": "How do I submit an expense report?", "answerable": false, "expected_source": null, "reference": ""}
+{"question": "How do I set up a Kubernetes cluster on AWS?", "answerable": false, "expected_source": null, "reference": ""}

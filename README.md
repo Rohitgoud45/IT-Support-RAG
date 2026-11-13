@@ -1,3 +1,14 @@
+---
+title: IT Support RAG
+emoji: 🛠️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 8000
+pinned: false
+short_description: RAG IT help desk that refuses instead of guessing
+---
+
 # Enterprise IT Support Assistant (RAG)
 
 An enterprise-grade, retrieval-augmented generation (RAG) assistant that resolves technical IT queries grounded in verified documentation with interactive source citations. Engineered with a **two-stage refusal guardrail** that refuses instead of guessing when the knowledge base doesn't cover a question.
@@ -7,6 +18,10 @@ An enterprise-grade, retrieval-augmented generation (RAG) assistant that resolve
 [![ChromaDB](https://img.shields.io/badge/Vector%20Store-ChromaDB%20(Local%20ONNX)-orange.svg)](https://www.trychroma.com/)
 [![React](https://img.shields.io/badge/Frontend-React%2018%20(Vite)-61dafb.svg)](https://react.dev/)
 [![test](https://github.com/Rohitgoud45/IT-Support-RAG/actions/workflows/test.yml/badge.svg)](https://github.com/Rohitgoud45/IT-Support-RAG/actions/workflows/test.yml)
+
+**Live demo:** _link goes here once the Hugging Face Space is up_
+
+Try an IT question ("VPN says error 809"), then something off-topic ("how do I bake cookies?") and see it refuse, along with which guardrail stopped it and why.
 
 ---
 
@@ -107,7 +122,7 @@ pytest
 
 ## Documented Evaluation Benchmark
 
-The harness scores 15 questions (11 answerable, 4 unanswerable) in `eval/questions.jsonl` and writes `eval/results.json`. Numbers are not quoted here until a fresh run is committed; at this corpus size (6 docs, ~8 chunks) top-4 retrieval returns half the knowledge base, so hit@4 says little.
+The harness scores 25 questions (20 answerable, 5 unanswerable) across 12 knowledge-base docs in `eval/questions.jsonl` and writes `eval/results.json`. Numbers are not quoted here until a fresh run is committed.
 
 ### Run the Evaluation Harness
 ```bash
@@ -133,14 +148,15 @@ it-support-rag/
 │   ├── retrieval.py      # Top-K vector search with cosine distance calculation
 │   ├── llm.py            # Multi-provider adapter (Gemini, OpenAI, Claude, Ollama, Mock)
 │   ├── generate.py       # Two-stage guardrails & citation attribution logic
+│   ├── ratelimit.py      # Per-IP rate limit + daily LLM call budget for public demos
 │   └── main.py           # FastAPI server & static SPA serving
-├── data/docs/            # Markdown IT knowledge base (VPN, WiFi, Printers, MFA, Passwords)
+├── data/docs/            # 12 Markdown IT help articles (VPN, MFA, email, Teams, security, ...)
 ├── docs/
 │   ├── ARCHITECTURE.md   # Comprehensive system architecture & design specification
 │   ├── EVALUATION.md     # Evaluation framework, benchmark results, & ablation studies
 │   └── AI_CODE_REVIEW.md # Review checklist & verification log of AI pair programming
 ├── eval/
-│   ├── questions.jsonl   # 15 golden evaluation scenarios (11 in-domain, 4 out-of-domain)
+│   ├── questions.jsonl   # 25 golden evaluation scenarios (20 in-domain, 5 out-of-domain)
 │   ├── results.json      # Written by run_eval.py; commit it after a real run
 │   └── run_eval.py       # Resumable evaluation harness with LLM-as-a-judge
 ├── frontend/             # React + Vite single-page application with citation explorer
@@ -151,13 +167,29 @@ it-support-rag/
 │   ├── test_core.py      # Core unit tests for chunking, parsing, retrieval, and API
 │   ├── test_guardrails.py# Dedicated boundary tests for Stage 1 & Stage 2 guardrails
 │   └── test_api_endpoints.py # Validation & API contract tests
-├── .github/workflows/    # CI: pytest on every push
+├── .github/workflows/    # CI: pytest on every push; deploy to Hugging Face after tests pass
 ├── requirements.txt      # Pinned runtime dependencies
 ├── requirements-dev.txt  # + pytest
 ├── pytest.ini            # Pytest configuration with pythonpath discovery
 └── Dockerfile            # Container definition for unified full-stack deployment
 ```
 
-## Deployment note
+## Deployment (Hugging Face Spaces)
 
-`/api/ask` has no login or rate limit, and each question that passes the distance check is a paid LLM call. Run it on an internal network or behind a VPN, or add a per-IP rate limit at your reverse proxy before exposing it publicly.
+The repo runs as a Docker Space with no changes; the YAML block at the top of this README is the Space config.
+
+1. Create a Space on huggingface.co with SDK **Docker** (blank template).
+2. In the Space settings, add a secret `GEMINI_API_KEY` (a free key from Google AI Studio works). Without a key the app runs in offline mock mode.
+3. In this GitHub repo, add secret `HF_TOKEN` (a Hugging Face write token) and variable `HF_SPACE` (e.g. `your-name/it-support-rag`).
+4. Push to `main`. After tests pass, `.github/workflows/deploy-hf.yml` pushes the code to the Space and it rebuilds.
+
+### Abuse limits
+
+`/api/ask` has no login, and each question that passes the distance check is a paid LLM call, so the app limits itself:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `RATE_LIMIT_PER_MIN` | 8 | Questions per visitor IP per rolling minute (HTTP 429 after that) |
+| `DAILY_LLM_CALLS` | 300 | Model calls per UTC day across all visitors (HTTP 503 after that). Distance refusals are free and don't count |
+
+Both are in-memory, so they reset on restart and assume a single container. Set either to `0` to turn it off.
